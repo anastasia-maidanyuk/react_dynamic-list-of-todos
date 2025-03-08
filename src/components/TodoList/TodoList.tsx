@@ -1,80 +1,78 @@
-import React from 'react';
+import { Todo } from '../../types/Todo';
+import classNames from 'classnames';
 
-interface Todo {
-  id: number;
-  title: string;
-  completed: boolean;
-  userId: number;
-}
-
-export const TodoList: React.FC<{
+type Props = {
   todos: Todo[];
-  onShowTodo: (todo: Todo) => void;
-  selectedTodoId?: number; // Accept selectedTodoId as a prop
-  onHideTodo: () => void; // Accept the onHideTodo callback as a prop
-}> = ({ todos, onShowTodo, selectedTodoId, onHideTodo }) => (
-  <table className="table is-narrow is-fullwidth">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>
-          <span className="icon">
-            <i className="fas fa-check" />
-          </span>
-        </th>
-        <th>Title</th>
-        <th> </th>
-      </tr>
-    </thead>
+  setSelectedTodo: React.Dispatch<React.SetStateAction<Todo | null>>;
+  selectedTodo: Todo | null;
+};
 
-    <tbody>
-      {todos.map(todo => (
-        <tr key={todo.id} data-cy="todo">
-          <td className="is-vcentered">{todo.id}</td>
-          <td className="is-vcentered">
-            {todo.completed && (
-              <span className="icon" data-cy="iconCompleted">
-                <i className="fas fa-check" />
-              </span>
+export const TodoList: React.FC<Props> = ({
+  todos,
+  setSelectedTodo,
+  selectedTodo,
+}) => {
+  return (
+    <table className="table is-narrow is-fullwidth">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>
+            <span className="icon">
+              <i className="fas fa-check" />
+            </span>
+          </th>
+          <th>Title</th>
+          <th> </th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {todos.map(todo => (
+          <tr
+            data-cy="todo"
+            className={classNames(
+              selectedTodo === todo ? 'has-background-info-light' : '',
             )}
-          </td>
-          <td className="is-vcentered is-expanded">
-            <p
-              className={
-                todo.completed ? 'has-text-success' : 'has-text-danger'
-              }
-            >
-              {todo.title}
-            </p>
-          </td>
-          <td className="has-text-right is-vcentered">
-            {/* Conditionally render the "view" or "hide" button */}
-            {todo.id !== selectedTodoId ? (
+            key={todo.id}
+          >
+            <td className="is-vcentered">{todo.id}</td>
+            <td className="is-vcentered">
+              {' '}
+              {todo.completed && (
+                <span className="icon" data-cy="iconCompleted">
+                  <i className="fas fa-check" />
+                </span>
+              )}
+            </td>
+            <td className="is-vcentered is-expanded">
+              <p
+                className={classNames(
+                  todo.completed ? 'has-text-success' : 'has-text-danger',
+                )}
+              >
+                {todo.title}
+              </p>
+            </td>
+            <td className="has-text-right is-vcentered">
               <button
                 data-cy="selectButton"
                 className="button"
                 type="button"
-                onClick={() => onShowTodo(todo)}
+                onClick={() => setSelectedTodo(todo)}
               >
                 <span className="icon">
-                  <i className="far fa-eye" />
+                  <i
+                    className={classNames(
+                      selectedTodo === todo ? 'far fa-eye-slash' : 'far fa-eye',
+                    )}
+                  />
                 </span>
               </button>
-            ) : (
-              <button
-                data-cy="hideButton"
-                className="button"
-                type="button"
-                onClick={onHideTodo}
-              >
-                <span className="icon">
-                  <i className="far fa-eye-slash" />
-                </span>
-              </button>
-            )}
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-);
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+};

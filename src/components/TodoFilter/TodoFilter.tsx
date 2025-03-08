@@ -1,49 +1,102 @@
-import React from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { Todo } from '../../types/Todo';
 
-export const TodoFilter: React.FC<{
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
-  filterStatus: string;
-  setFilterStatus: (status: string) => void;
-}> = ({ searchQuery, setSearchQuery, filterStatus, setFilterStatus }) => (
-  <form className="field has-addons">
-    <p className="control">
-      <span className="select">
-        <select
-          data-cy="statusSelect"
-          value={filterStatus}
-          onChange={e => setFilterStatus(e.target.value)}
-        >
-          <option value="all">All</option>
-          <option value="active">Active</option>
-          <option value="completed">Completed</option>
-        </select>
-      </span>
-    </p>
+type Props = {
+  todos: Todo[] | null;
+  setCurrentTodos: React.Dispatch<React.SetStateAction<Todo[]>>;
+};
 
-    <p className="control is-expanded has-icons-left has-icons-right">
-      <input
-        data-cy="searchInput"
-        type="text"
-        className="input"
-        placeholder="Search..."
-        value={searchQuery}
-        onChange={e => setSearchQuery(e.target.value)}
-      />
-      <span className="icon is-left">
-        <i className="fas fa-magnifying-glass" />
-      </span>
+export const TodoFilter: React.FC<Props> = ({ todos, setCurrentTodos }) => {
+  const [showQueryCancel, setShowQueryCancel] = useState(false);
+  const [queryValue, setQueryValue] = useState('');
+  const [filterValue, setFilterValue] = useState('all');
 
-      {searchQuery && (
-        <span className="icon is-right" style={{ pointerEvents: 'all' }}>
-          <button
-            data-cy="clearSearchButton"
-            type="button"
-            className="delete"
-            onClick={() => setSearchQuery('')}
-          />
+  const todosFilter = useCallback(
+    (query: string, filter: string) => {
+      let todosFiltered: Todo[] = todos ? [...todos] : [];
+
+      if (filter === 'completed') {
+        todosFiltered = todosFiltered.filter(todo => todo.completed);
+      } else if (filter === 'active') {
+        todosFiltered = todosFiltered.filter(todo => !todo.completed);
+      }
+
+      if (query) {
+        todosFiltered = todosFiltered.filter(todo =>
+          todo.title.toLowerCase().includes(query.toLowerCase()),
+        );
+      }
+
+      return todosFiltered;
+    },
+    [todos],
+  );
+
+  useEffect(() => {
+    const filtered = todosFilter(queryValue, filterValue);
+
+    setCurrentTodos(filtered);
+    setShowQueryCancel(queryValue !== '');
+  }, [todos, queryValue, filterValue, todosFilter, setCurrentTodos]);
+
+  function handleQuery(e: string) {
+    const newQuery = String(e).trim();
+
+    setQueryValue(newQuery);
+  }
+
+  function handleFilter(newFilter: string) {
+    setFilterValue(newFilter);
+  }
+
+  function handleCancelQuery() {
+    setQueryValue('');
+    setShowQueryCancel(false);
+  }
+
+  return (
+    <form className="field has-addons">
+      <p className="control">
+        <span className="select">
+          <select
+            data-cy="statusSelect"
+            name="filter"
+            value={filterValue}
+            onChange={e => handleFilter(e.currentTarget.value)}
+          >
+            <option value="all">All</option>
+            <option value="active">Active</option>
+            <option value="completed">Completed</option>
+          </select>
         </span>
-      )}
-    </p>
-  </form>
-);
+      </p>
+
+      <p className="control is-expanded has-icons-left has-icons-right">
+        <input
+          data-cy="searchInput"
+          type="text"
+          className="input"
+          placeholder="Search..."
+          name="query"
+          onChange={e => handleQuery(e.currentTarget.value)}
+          value={queryValue}
+        />
+        <span className="icon is-left">
+          <i className="fas fa-magnifying-glass" />
+        </span>
+
+        <span className="icon is-right" style={{ pointerEvents: 'all' }}>
+          {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
+          {showQueryCancel && (
+            <button
+              data-cy="clearSearchButton"
+              type="button"
+              className="delete"
+              onClick={() => handleCancelQuery()}
+            />
+          )}
+        </span>
+      </p>
+    </form>
+  );
+};
